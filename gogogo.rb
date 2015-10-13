@@ -21,27 +21,48 @@ def event_to_string(e)
     :metadata => e.metadata,
     :space_guid => e.space_guid,
     :organization_guid => e.organization_guid
-  }.to_s
+  }.to_json
 end
 
 def get_all_events_as_strings(events)
   output = []
-  last_timestamp = DateTime.parse events[-1].timestamp
-  events.each do |event|
-    output << event_to_string(event)
+  last_timestamp = nil
+  if events.count != 0
+    last_timestamp = DateTime.parse events[-1].timestamp
+    last_guid = events[-1].guid
+    events.each do |event|
+      output << event_to_string(event)
+    end
   end
-  [output, last_timestamp]
+  [output, last_timestamp, last_guid]
 end
 
-def get_events(c, since)
-  if since.nil?
-    c.events
-  else
-    []
-  end
+def create_query(timestamp)
+  qv = CFoundry::V2::ModelMagic::QueryValue.new(comparator: '>', value: timestamp)
+  {query: {timestamp: qv}}
 end
 
+def get_events(c, timestamp)
+  query = create_query(timestamp)
+  c.events(query)
+end
+
+
+# Last hours worth of events.
+timestamp = Time.now - 60*60
 #Loop every x min
-events = get_events(client, nil)
-output, last_timestamp = get_all_events_as_strings(events)
-puts output
+while true
+  events = get_events(client, timestamp)
+  output, last_timestamp, last_guid = get_all_events_as_strings(events)
+  if output
+    output.each do |o|
+      if not o.include? last_guid
+        puts o
+      end
+    end
+  end
+  if not last_timestamp.nil?
+    timestamp = last_timestamp
+  end
+  sleep 1
+end
