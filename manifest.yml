@@ -1,0 +1,7 @@
+name: events
+command: bundle exec ruby app.rb
+no-route: true
+env:
+  CF_API: https://api.10.244.0.34.xip.io
+  CF_USER: admin
+  CF_PASSWORD: admin 

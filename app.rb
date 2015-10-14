@@ -2,9 +2,9 @@ require 'cfoundry'
 require 'json'
 require 'set'
 
-cf_api = "https://api.10.244.0.34.xip.io"
-cf_user = "admin"
-cf_password = "admin"
+cf_api = ENV['CF_API'] 
+cf_user = ENV['CF_USER']
+cf_password = ENV['CF_PASSWORD']
 
 client = CFoundry::Client.get(cf_api)
 client.login({:username => cf_user, :password => cf_password})
