@@ -1,6 +1,6 @@
 require 'cfoundry'
 require 'json'
-require 'rufus-scheduler'
+require 'set'
 
 cf_api = "https://api.10.244.0.34.xip.io"
 cf_user = "admin"
@@ -9,7 +9,7 @@ cf_password = "admin"
 client = CFoundry::Client.get(cf_api)
 client.login({:username => cf_user, :password => cf_password})
 
-def event_to_string(e)
+def event_to_hash(e)
   {
     :guid => e.guid,
     :type => e.type,
@@ -21,7 +21,7 @@ def event_to_string(e)
     :metadata => e.metadata,
     :space_guid => e.space_guid,
     :organization_guid => e.organization_guid
-  }.to_json
+  }
 end
 
 def get_all_events_as_strings(events)
@@ -29,12 +29,11 @@ def get_all_events_as_strings(events)
   last_timestamp = nil
   if events.count != 0
     last_timestamp = DateTime.parse events[-1].timestamp
-    last_guid = events[-1].guid
     events.each do |event|
-      output << event_to_string(event)
+      output << event_to_hash(event)
     end
   end
-  [output, last_timestamp, last_guid]
+  [output, last_timestamp]
 end
 
 def create_query(timestamp)
@@ -50,15 +49,19 @@ end
 
 # Last hours worth of events.
 timestamp = Time.now - 60*60
-#Loop every x min
+output_guids = Set.new
+
+# Loop every x seconds
 while true
+
   events = get_events(client, timestamp)
   output, last_timestamp, last_guid = get_all_events_as_strings(events)
-  if output
-    output.each do |o|
-      if not o.include? last_guid
-        puts o
-      end
+
+  output.each do |o|
+    guid = o[:guid]
+    if not output_guids.include? guid
+      puts o.to_json
+      output_guids << guid
     end
   end
   if not last_timestamp.nil?
