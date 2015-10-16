@@ -1,4 +1,4 @@
-name: events
+name: cf-app-events-logger
 command: bundle exec ruby app.rb
 no-route: true
 env:
