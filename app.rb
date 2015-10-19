@@ -107,12 +107,12 @@ while true
     guid = o[:guid]
     if not output_guids.include? guid
       puts o.to_json
-      $stdout.flush
       output_guids << guid
     end
   end
   if not last_timestamp.nil?
     timestamp = last_timestamp
   end
+  $stdout.flush
   sleep 10
 end
