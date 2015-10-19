@@ -2,10 +2,13 @@ require 'cfoundry'
 require 'json'
 require 'set'
 require 'moneta'
+require 'rufus-scheduler'
 
 cf_api = ENV['CF_API']
 cf_user = ENV['CF_USER']
 cf_password = ENV['CF_PASSWORD']
+fetch_every = ENV['FETCH_EVERY'] || 10
+clear_cache_every = ENV['CLEAR_CACHE_EVERY'] || 300
 
 @client = CFoundry::Client.get(cf_api)
 @client.login({:username => cf_user, :password => cf_password})
@@ -18,7 +21,7 @@ def metadata(e)
   space_id = e[:space_guid]
   space_name = if @cache[space_id] then @cache[space_id] else @cache[space_id] = (@client.space space_id).name end
 
-  actee_name = ""
+  actor_name = ""
   actor_id = e[:actor]
   if e[:actor_type] == "app"
     actor_name = if @cache[actor_id] then @cache[actor_id] else @cache[actor_id] = (@client.app actor_id).name end
@@ -91,17 +94,28 @@ def get_events(c, timestamp)
   c.events(query)
 end
 
+def clear_appname_cache(counter, every, cache)
+  if counter % every == 0
+    puts "Clearing app name cache"
+    cache.clear()
+  end
+end
 
-# Last hours worth of events.
+scheduler = Rufus::Scheduler.new
+
+# Main loop
+scheduler.every "#{clear_cache_every}s" do
+  puts "Clearing cache"
+  @cache.clear()
+end
+
 timestamp = Time.now - 60*60
 output_guids = Set.new
+scheduler.every "#{fetch_every}s", :first_in => '1s' do
+  puts "Fetching events"
 
-# Loop every x seconds
-puts "Starting processing"
-while true
-  puts "Getting events"
   events = get_events(@client, timestamp)
-  output, last_timestamp, last_guid = get_all_events_as_strings(events)
+  output, last_timestamp = get_all_events_as_strings(events)
 
   output.each do |o|
     guid = o[:guid]
@@ -114,5 +128,6 @@ while true
     timestamp = last_timestamp
   end
   $stdout.flush
-  sleep 10
 end
+
+scheduler.join
