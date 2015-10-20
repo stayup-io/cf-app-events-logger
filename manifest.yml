@@ -1,6 +1,7 @@
 name: cf-app-events-logger
 command: bundle exec ruby app.rb
 no-route: true
+no-hostname: true
 memory: 256M
 env:
   CF_API: https://api.system.pcf-1-5.stayup.io
