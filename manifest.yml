@@ -1,10 +1,11 @@
 name: cf-app-events-logger
+buildpack: ruby_buildpack
 command: bundle exec ruby app.rb
 no-route: true
 no-hostname: true
 memory: 256M
 env:
-  CF_API: https://api.system.pcf-1-5.stayup.io
+  CF_API: https://api.system.pcf-1-6.stayup.io
   CF_USER: admin
   CF_PASSWORD: CF_ADMIN_USER_PASSWD
   FETCH_EVERY: 10        # fetch event data every n seconds

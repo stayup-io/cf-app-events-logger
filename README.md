@@ -25,5 +25,11 @@ Make necessary changes to the manifest.yml to reflect your environment.
 
 # Push
 
-cf push
-
+```
+cf target -o system -s elk-for-pcf
+cf push --no-start
+cf set-env cf-app-events-logger CF_PASSWORD <admin_user_password>
+cf set-env cf-app-events-logger CF_API https://api.system.<your.cf.domain>
+cf set-health-check cf-app-events-logger none #If deploying to Diego
+cf start cf-app-events-logger
+```

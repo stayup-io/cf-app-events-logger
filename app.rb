@@ -63,7 +63,6 @@ def event_to_hash(e)
     :actor_type => e.actor_type,
     :actee => e.actee,
     :actee_type => e.actee_type,
-    :actee_type => e.actee_type,
     :timestamp => e.timestamp,
     :metadata => e.metadata,
     :space_guid => e.space_guid,
