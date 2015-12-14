@@ -4,14 +4,22 @@ require 'set'
 require 'moneta'
 require 'rufus-scheduler'
 
-cf_api = ENV['CF_API']
-cf_user = ENV['CF_USER']
-cf_password = ENV['CF_PASSWORD']
+@cf_api = ENV['CF_API']
+@cf_user = ENV['CF_USER']
+@cf_password = ENV['CF_PASSWORD']
 fetch_every = ENV['FETCH_EVERY'] || 10
 clear_cache_every = ENV['CLEAR_CACHE_EVERY'] || 300
 
-@client = CFoundry::Client.get(cf_api)
-@client.login({:username => cf_user, :password => cf_password})
+@client = CFoundry::Client.get(@cf_api)
+
+def authenticate_with_cf
+  begin
+    @client.login({:username => @cf_user, :password => @cf_password})
+  rescue Exception => e
+    puts "ERROR - Unable to authenticate as #{@cf_user} against CF API: #{@cf_api}.\n#{e}\nExiting"
+    exit
+  end
+end
 
 @cache = Moneta.new(:LRUHash)
 
@@ -113,16 +121,23 @@ output_guids = Set.new
 scheduler.every "#{fetch_every}s", :first_in => '1s' do
   puts "Fetching events since #{timestamp}"
 
-  events = get_events(@client, timestamp)
-  output, last_timestamp = get_all_events_as_strings(events)
+  begin
+    authenticate_with_cf
+    events = get_events(@client, timestamp)
+    output, last_timestamp = get_all_events_as_strings(events)
 
-  output.each do |o|
-    guid = o[:guid]
-    if not output_guids.include? guid
-      puts o.to_json
-      output_guids << guid
+    output.each do |o|
+      guid = o[:guid]
+      if not output_guids.include? guid
+        puts o.to_json
+        output_guids << guid
+      end
     end
+  rescue CFoundry::NotAuthenticated
+    puts "WARN - Authentication error with #{@cf_api} as user #{@cf_user}.  Attempting to authenticate again..."
+    authenticate_with_cf
   end
+
   if not last_timestamp.nil?
     begin
       timestamp = Time.parse(last_timestamp.to_s) - ( 2 * fetch_every )
