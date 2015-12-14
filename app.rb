@@ -2,13 +2,14 @@ require 'cfoundry'
 require 'json'
 require 'set'
 require 'moneta'
+require 'time'
 require 'rufus-scheduler'
 
 @cf_api = ENV['CF_API']
 @cf_user = ENV['CF_USER']
 @cf_password = ENV['CF_PASSWORD']
-fetch_every = ENV['FETCH_EVERY'] || 10
-clear_cache_every = ENV['CLEAR_CACHE_EVERY'] || 300
+fetch_every = ENV['FETCH_EVERY'].to_i || 10
+clear_cache_every = ENV['CLEAR_CACHE_EVERY'].to_i || 300
 
 @client = CFoundry::Client.get(@cf_api)
 
@@ -141,8 +142,8 @@ scheduler.every "#{fetch_every}s", :first_in => '1s' do
   if not last_timestamp.nil?
     begin
       timestamp = Time.parse(last_timestamp.to_s) - ( 2 * fetch_every )
-    rescue TypeError
-      puts "ERROR - unable to calculate new timestamp from #{last_timestamp} - ( 2 * #{fetch_every} )"
+    rescue TypeError => e
+      puts "ERROR - unable to calculate new timestamp from #{last_timestamp} - ( 2 * #{fetch_every} )\n#{e}"
     end
   end
   $stdout.flush
