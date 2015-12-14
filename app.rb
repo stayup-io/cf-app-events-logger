@@ -124,7 +124,11 @@ scheduler.every "#{fetch_every}s", :first_in => '1s' do
     end
   end
   if not last_timestamp.nil?
-    timestamp = last_timestamp - ( 2 * fetch_every )
+    begin
+      timestamp = Time.parse(last_timestamp.to_s) - ( 2 * fetch_every )
+    rescue TypeError
+      puts "ERROR - unable to calculate new timestamp from #{last_timestamp} - ( 2 * #{fetch_every} )"
+    end
   end
   $stdout.flush
 end
