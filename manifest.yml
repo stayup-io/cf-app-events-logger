@@ -7,6 +7,6 @@ memory: 256M
 env:
   CF_API: https://api.system.pcf-1-6.stayup.io
   CF_USER: admin
-  CF_PASSWORD: CF_ADMIN_USER_PASSWD
+  #CF_PASSWORD: CF_ADMIN_USER_PASSWD
   FETCH_EVERY: 10        # fetch event data every n seconds
   CLEAR_CACHE_EVERY: 300 # clear cached data every n seconds
